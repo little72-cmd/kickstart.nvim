@@ -179,6 +179,13 @@ vim.keymap.set('n', 'k', 'gk', { desc = 'Move cursor up one wrapped line' })
 
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
+--Read full virtual notifications
+
+vim.keymap.set('n', '<Leader>m', function()
+  vim.diagnostic.open_float()
+  vim.diagnostic.open_float()
+end, { noremap = true, silent = true, desc = 'View Full Virtual Line' })
+
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
@@ -284,6 +291,7 @@ require('lazy').setup({
       dashboard = { enabled = true },
       explorer = { enabled = true },
       indent = { enabled = true },
+      image = { enabled = true },
       input = { enabled = true },
       notifier = {
         enabled = true,
@@ -311,6 +319,7 @@ require('lazy').setup({
       { '<leader>e', function() Snacks.explorer() end, desc = 'File Explorer' },
     },
   },
+
   -- Here is a more advanced example where we pass configuration
   -- options to `gitsigns.nvim`.
   --
@@ -812,6 +821,7 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        markdown = { 'markdownlint-cli2' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
