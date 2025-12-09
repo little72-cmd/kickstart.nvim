@@ -1,89 +1,3 @@
---[[
-
-=====================================================================
-==================== READ THIS BEFORE CONTINUING ====================
-=====================================================================
-========                                    .-----.          ========
-========         .----------------------.   | === |          ========
-========         |.-""""""""""""""""""-.|   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||   KICKSTART.NVIM   ||   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||                    ||   |-----|          ========
-========         ||:Tutor              ||   |:::::|          ========
-========         |'-..................-'|   |____o|          ========
-========         `"")----------------(""`   ___________      ========
-========        /::::::::::|  |::::::::::\  \ no mouse \     ========
-========       /:::========|  |==hjkl==:::\  \ required \    ========
-========      '""""""""""""'  '""""""""""""'  '""""""""""'   ========
-========                                                     ========
-=====================================================================
-=====================================================================
-
-What is Kickstart?
-
-  Kickstart.nvim is *not* a distribution.
-
-  Kickstart.nvim is a starting point for your own configuration.
-    The goal is that you can read every line of code, top-to-bottom, understand
-    what your configuration is doing, and modify it to suit your needs.
-
-    Once you've done that, you can start exploring, configuring and tinkering to
-    make Neovim your own! That might mean leaving Kickstart just the way it is for a while
-    or immediately breaking it into modular pieces. It's up to you!
-
-    If you don't know anything about Lua, I recommend taking some time to read through
-    a guide. One possible example which will only take 10-15 minutes:
-      - https://learnxinyminutes.com/docs/lua/
-
-    After understanding a bit more about Lua, you can use `:help lua-guide` as a
-    reference for how Neovim integrates Lua.
-    - :help lua-guide
-    - (or HTML version): https://neovim.io/doc/user/lua-guide.html
-
-Kickstart Guide:
-
-  TODO: The very first thing you should do is to run the command `:Tutor` in Neovim.
-
-    If you don't know what this means, type the following:
-      - <escape key>
-      - :
-      - Tutor
-      - <enter key>
-
-    (If you already know the Neovim basics, you can skip this step.)
-
-  Once you've completed that, you can continue working through **AND READING** the rest
-  of the kickstart init.lua.
-
-  Next, run AND READ `:help`.
-    This will open up a help window with some basic information
-    about reading, navigating and searching the builtin help documentation.
-
-    This should be the first place you go to look when you're stuck or confused
-    with something. It's one of my favorite Neovim features.
-
-    MOST IMPORTANTLY, we provide a keymap "<space>sh" to [s]earch the [h]elp documentation,
-    which is very useful when you're not exactly sure of what you're looking for.
-
-  I have left several `:help X` comments throughout the init.lua
-    These are hints about where to find more information about the relevant settings,
-    plugins or Neovim features used in Kickstart.
-
-   NOTE: Look for lines like this
-
-    Throughout the file. These are for you, the reader, to help you understand what is happening.
-    Feel free to delete them once you know what you're doing, but they should serve as a guide
-    for when you are first encountering a few different constructs in your Neovim config.
-
-If you experience any errors while trying to install kickstart, run `:checkhealth` for more info.
-
-I hope you enjoy your Neovim journey,
-- TJ
-
-P.S. You can delete this when you're done too. It's your config now! :)
---]]
-
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
@@ -213,6 +127,19 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
+local colors = {
+  function() require 'colorschemes' end,
+}
+
+local time = {
+  function() return '󰥔 ' .. os.date '%H:%M' end,
+}
+
+local nvimbattery = {
+  function() return require('battery').get_status_line() end,
+  color = { fg = colors.violet, bg = colors.bg },
+}
+
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
 -- vim.keymap.set("n", "<C-S-l>", "<C-w>L", { desc = "Move window to the right" })
@@ -257,6 +184,8 @@ rtp:prepend(lazypath)
 -- NOTE: Here is where you install your plugins.
 require('lazy').setup({
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
+  require 'custom.plugins.colorschemes',
+
   'NMAC427/guess-indent.nvim', -- Detect tabstop and shiftwidth automatically
 
   -- NOTE: Plugins can also be added by using a table,
@@ -298,7 +227,15 @@ require('lazy').setup({
         enabled = true,
         timeout = 7000,
       },
-      picker = { enabled = true },
+      picker = {
+        sources = {
+          explorer = {
+            layout = { preset = 'sidebar', preview = false, layout = {
+              width = 0.2,
+            } },
+          },
+        },
+      },
       quickfile = { enabled = true },
       scope = { enabled = true },
       scroll = { enabled = true },
@@ -531,6 +468,7 @@ require('lazy').setup({
       },
     },
   },
+
   {
     -- Main LSP Configuration
     'neovim/nvim-lspconfig',
@@ -577,7 +515,7 @@ require('lazy').setup({
       --  This function gets run when an LSP attaches to a particular buffer.
       --    That is to say, every time a new file is opened that is associated with
       --    an lsp (for example, opening `main.rs` is associated with `rust_analyzer`) this
-      --    function will be executed to configure the current buffer
+
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
         callback = function(event)
@@ -590,7 +528,6 @@ require('lazy').setup({
             mode = mode or 'n'
             vim.keymap.set(mode, keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
           end
-
           -- Rename the variable under your cursor.
           --  Most Language Servers support renaming across files, etc.
           map('grn', vim.lsp.buf.rename, '[R]e[n]ame')
@@ -730,7 +667,12 @@ require('lazy').setup({
         -- gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
-        -- texlab = {},
+        texlab = {
+          build = {
+            isContinuous = true,
+          },
+          chktex = { onOpenAndSave = true, onEdit = false },
+        },
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
         -- Some languages (like typescript) have entire language plugins that can be useful:
@@ -740,20 +682,21 @@ require('lazy').setup({
         -- ts_ls = {},
         --
 
-        lua_ls = {
-          -- cmd = { ... },
-          -- filetypes = { ... },
-          -- capabilities = {},
-          settings = {
-            Lua = {
-              completion = {
-                callSnippet = 'Replace',
-              },
-              -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
-              -- diagnostics = { disable = { 'missing-fields' } },
-            },
-          },
-        },
+        --lua_ls = {
+        -- cmd = { ... },
+        -- filetypes = { ... },
+        -- capabilities = {},
+        --settings = {
+        --Lua = {
+        --completion = {
+        --callSnippet = 'Replace',
+        --},
+        -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
+        -- diagnostics = { disable = { 'missing-fields' } },
+        --},
+        --},
+        --},
+        ltex_plus = {},
       }
 
       -- Ensure the servers and tools above are installed
@@ -791,7 +734,14 @@ require('lazy').setup({
       }
     end,
   },
-
+  {
+    'jhofscheier/ltex-utils.nvim',
+    dependencies = {
+      'neovim/nvim-lspconfig',
+      'nvim-telescope/telescope.nvim',
+    },
+    opts = {},
+  },
   { -- Autoformat
     'stevearc/conform.nvim',
     event = { 'BufWritePre' },
@@ -815,7 +765,7 @@ require('lazy').setup({
           return nil
         else
           return {
-            timeout_ms = 500,
+            timeout_ms = 5000,
             lsp_format = 'fallback',
           }
         end
@@ -823,6 +773,11 @@ require('lazy').setup({
       formatters_by_ft = {
         lua = { 'stylua' },
         markdown = { 'markdownlint-cli2' },
+        latex = { 'latex-indent', 'chktex' },
+        yaml = { 'yamllint' },
+        toml = { 'tombi' },
+        json = { 'jsonlint' },
+        kdl = { 'kdlfmt' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -954,9 +909,21 @@ require('lazy').setup({
 
   {
     'justinhj/battery.nvim',
-    dependencies = { 'nvim-lua/plenary.nvim', 'nvim-tree/nvim-web-devicons' },
+    dependencies = {
+      'nvim-tree/nvim-web-devicons',
+      'nvim-lua/plenary.nvim',
+    },
     config = function()
-      require('battery').setup {} -- Basic setup
+      local battery = require 'battery'
+      battery.setup {
+        update_rate_seconds = 30, -- Number of seconds between checking battery status
+        show_status_when_no_battery = true, -- Don't show any icon or text when no battery found (desktop for example)
+        show_plugged_icon = true, -- If true show a cable icon alongside the battery icon when plugged in
+        show_unplugged_icon = true, -- When true show a diconnected cable icon when not plugged in
+        show_percent = true, -- Whether or not to show the percent charge remaining in digits
+        vertical_icons = true, -- When true icons are vertical, otherwise shows horizontal battery icon
+        multiple_battery_selection = 1, -- Which battery to choose when multiple found. "max" or "maximum", "min" or "minimum" or a number to pick the nth battery found (currently linux acpi only)
+      }
     end,
   },
 
@@ -1001,17 +968,16 @@ require('lazy').setup({
           lualine_a = { 'mode' },
           lualine_b = { 'branch', 'diff', 'diagnostics' },
           lualine_c = { 'filename' },
-          lualine_w = { 'encoding', 'fileformat', 'filetype' },
-          lualine_x = { 'progress' },
-          lualine_y = { 'location' },
-          lualine_z = { function() return '󰥔 ' .. os.date '%H:%M' end },
+          lualine_x = { 'filetype', 'location' },
+          lualine_y = { nvimbattery },
+          lualine_z = { time },
         },
         inactive_sections = {
           lualine_a = {},
-          lualine_b = {},
+          lualine_b = { 'branch' },
           lualine_c = { 'filename' },
           lualine_x = { 'location' },
-          lualine_y = {},
+          lualine_y = { nvimbattery, time },
           lualine_z = {},
         },
         tabline = {},
@@ -1020,6 +986,21 @@ require('lazy').setup({
         extensions = {},
       }
     end,
+  },
+
+  {
+    'MeanderingProgrammer/render-markdown.nvim',
+    dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-mini/mini.nvim' }, -- if you use the mini.nvim suite
+    -- dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-mini/mini.icons' },        -- if you use standalone mini plugins
+    -- dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' }, -- if you prefer nvim-web-devicons
+    ---@module 'render-markdown'
+    ---@type render.md.UserConfig
+    opts = {},
+  },
+
+  {
+    'yousefhadder/markdown-plus.nvim',
+    ft = 'markdown',
   },
 
   { -- Highlight, edit, and navigate code
@@ -1058,8 +1039,6 @@ require('lazy').setup({
   --  Here are some example plugins that I've included in the Kickstart repository.
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
-  require 'custom.plugins.colorschemes',
-
   require 'kickstart.plugins.debug',
   require 'kickstart.plugins.indent_line',
   require 'kickstart.plugins.lint',
