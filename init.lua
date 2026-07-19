@@ -7,7 +7,9 @@ vim.g.maplocalleader = ' '
 
 vim.opt.linebreak = true
 
-vim.opt.smoothscroll = true
+vim.opt.conceallevel = 2
+
+vim.opt.clipboard = 'unnamedplus'
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = true
@@ -127,17 +129,17 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
-local colors = {
+Colors = {
   function() require 'colorschemes' end,
 }
 
-local time = {
+Time = {
   function() return '󰥔 ' .. os.date '%H:%M' end,
 }
 
-local nvimbattery = {
+Nvimbattery = {
   function() return require('battery').get_status_line() end,
-  color = { fg = colors.violet, bg = colors.bg },
+  color = { fg = Colors.violet, bg = Colors.bg },
 }
 
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
@@ -184,7 +186,9 @@ rtp:prepend(lazypath)
 -- NOTE: Here is where you install your plugins.
 require('lazy').setup({
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
-  require 'custom.plugins.colorschemes',
+  require 'plugins.colorschemes',
+  require 'plugins.markdown',
+  require 'plugins.candy',
 
   'NMAC427/guess-indent.nvim', -- Detect tabstop and shiftwidth automatically
 
@@ -206,58 +210,6 @@ require('lazy').setup({
   --        end,
   --    }
   --
-  {
-    'karb94/neoscroll.nvim',
-    opts = {},
-  },
-
-  {
-    'folke/snacks.nvim',
-    priority = 1000,
-    lazy = false,
-    ---@type snacks.Config
-    opts = {
-      bigfile = { enabled = true },
-      dashboard = { enabled = true },
-      explorer = { enabled = true },
-      indent = { enabled = true },
-      image = { enabled = true },
-      input = { enabled = true },
-      notifier = {
-        enabled = true,
-        timeout = 7000,
-      },
-      picker = {
-        sources = {
-          explorer = {
-            layout = { preset = 'sidebar', preview = false, layout = {
-              width = 0.2,
-            } },
-          },
-        },
-      },
-      quickfile = { enabled = true },
-      scope = { enabled = true },
-      scroll = { enabled = true },
-      statuscolumn = { enabled = true },
-      words = { enabled = true },
-      styles = {
-        notification = {
-          wo = { wrap = true }, -- Wrap notifications
-        },
-      },
-    },
-    keys = {
-      -- Top Pickers & Explorer
-      { '<leader><space>', function() Snacks.picker.smart() end, desc = 'Smart Find Files' },
-      { '<leader>,', function() Snacks.picker.buffers() end, desc = 'Buffers' },
-      { '<leader>/', function() Snacks.picker.grep() end, desc = 'Grep' },
-      { '<leader>:', function() Snacks.picker.command_history() end, desc = 'Command History' },
-      { '<leader>n', function() Snacks.picker.notifications() end, desc = 'Notification History' },
-      { '<leader>e', function() Snacks.explorer() end, desc = 'File Explorer' },
-    },
-  },
-
   -- Here is a more advanced example where we pass configuration
   -- options to `gitsigns.nvim`.
   --
@@ -773,11 +725,13 @@ require('lazy').setup({
       formatters_by_ft = {
         lua = { 'stylua' },
         markdown = { 'markdownlint-cli2' },
-        latex = { 'latex-indent', 'chktex' },
+        latex = { 'latex-indent' },
         yaml = { 'yamllint' },
         toml = { 'tombi' },
         json = { 'jsonlint' },
         kdl = { 'kdlfmt' },
+        css = { 'prettier' },
+        html = { 'prettier' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -907,106 +861,10 @@ require('lazy').setup({
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
 
-  {
-    'justinhj/battery.nvim',
-    dependencies = {
-      'nvim-tree/nvim-web-devicons',
-      'nvim-lua/plenary.nvim',
-    },
-    config = function()
-      local battery = require 'battery'
-      battery.setup {
-        update_rate_seconds = 30, -- Number of seconds between checking battery status
-        show_status_when_no_battery = true, -- Don't show any icon or text when no battery found (desktop for example)
-        show_plugged_icon = true, -- If true show a cable icon alongside the battery icon when plugged in
-        show_unplugged_icon = true, -- When true show a diconnected cable icon when not plugged in
-        show_percent = true, -- Whether or not to show the percent charge remaining in digits
-        vertical_icons = true, -- When true icons are vertical, otherwise shows horizontal battery icon
-        multiple_battery_selection = 1, -- Which battery to choose when multiple found. "max" or "maximum", "min" or "minimum" or a number to pick the nth battery found (currently linux acpi only)
-      }
-    end,
-  },
-
-  {
-    'nvim-lualine/lualine.nvim',
-    dependencies = { 'nvim-tree/nvim-web-devicons' },
-    config = function()
-      require('lualine').setup {
-        options = {
-          icons_enabled = true,
-          theme = 'auto',
-          component_separators = { left = '', right = '' },
-          section_separators = { left = '', right = '' },
-          disabled_filetypes = {
-            statusline = {},
-            winbar = {},
-          },
-          ignore_focus = {},
-          always_divide_middle = true,
-          always_show_tabline = true,
-          globalstatus = false,
-          refresh = {
-            statusline = 1000,
-            tabline = 1000,
-            winbar = 1000,
-            refresh_time = 16, -- ~60fps
-            events = {
-              'WinEnter',
-              'BufEnter',
-              'BufWritePost',
-              'SessionLoadPost',
-              'FileChangedShellPost',
-              'VimResized',
-              'Filetype',
-              'CursorMoved',
-              'CursorMovedI',
-              'ModeChanged',
-            },
-          },
-        },
-        sections = {
-          lualine_a = { 'mode' },
-          lualine_b = { 'branch', 'diff', 'diagnostics' },
-          lualine_c = { 'filename' },
-          lualine_x = { 'filetype', 'location' },
-          lualine_y = { nvimbattery },
-          lualine_z = { time },
-        },
-        inactive_sections = {
-          lualine_a = {},
-          lualine_b = { 'branch' },
-          lualine_c = { 'filename' },
-          lualine_x = { 'location' },
-          lualine_y = { nvimbattery, time },
-          lualine_z = {},
-        },
-        tabline = {},
-        winbar = {},
-        inactive_winbar = {},
-        extensions = {},
-      }
-    end,
-  },
-
-  {
-    'MeanderingProgrammer/render-markdown.nvim',
-    dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-mini/mini.nvim' }, -- if you use the mini.nvim suite
-    -- dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-mini/mini.icons' },        -- if you use standalone mini plugins
-    -- dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' }, -- if you prefer nvim-web-devicons
-    ---@module 'render-markdown'
-    ---@type render.md.UserConfig
-    opts = {},
-  },
-
-  {
-    'yousefhadder/markdown-plus.nvim',
-    ft = 'markdown',
-  },
-
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
-    main = 'nvim-treesitter.configs', -- Sets main module to use for opts
+    main = 'nvim-treesitter', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
       ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
