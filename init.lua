@@ -732,6 +732,8 @@ require('lazy').setup({
         kdl = { 'kdlfmt' },
         css = { 'prettier' },
         html = { 'prettier' },
+        javascript = { 'prettier' },
+        typescript = { 'prettier' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
